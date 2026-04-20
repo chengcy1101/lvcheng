@@ -15,7 +15,8 @@ const allowedOrigins = [
   'http://localhost:8080',
   'http://localhost:3000',
   'https://your-project.vercel.app',
-  'https://your-project.netlify.app'
+  'https://your-project.netlify.app',
+  'https://lvchengtestpersonally-7jgwev8ew-ccy20250601-6285s-projects.vercel.app'
 ];
 
 app.use(cors({
