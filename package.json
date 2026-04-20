@@ -1,0 +1,16 @@
+{
+  "name": "lvcheng-ai-sales-assistant",
+  "version": "1.0.0",
+  "description": "绿城AI案场销助",
+  "scripts": {
+    "dev": "concurrently \"cd backend && npm start\" \"cd frontend && python3 -m http.server 8080\"",
+    "start": "cd backend && npm start",
+    "build": "echo \"项目不需要构建\""
+  },
+  "keywords": ["ai", "sales", "assistant", "real-estate"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

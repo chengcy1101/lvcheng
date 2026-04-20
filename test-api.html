@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>火山引擎API测试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background-color: #fafafa;
+        }
+        .test-section h2 {
+            color: #0066cc;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: 500;
+        }
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        button {
+            background-color: #0066cc;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #0052a3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .result-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e8f4fd;
+            border-radius: 8px;
+            border-left: 4px solid #0066cc;
+        }
+        .result-section h3 {
+            color: #0066cc;
+            margin-bottom: 10px;
+        }
+        .log-section {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            color: #f0f0f0;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-section h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-entry.info {
+            background-color: #2196F3;
+            color: white;
+        }
+        .log-entry.error {
+            background-color: #f44336;
+            color: white;
+        }
+        .log-entry.success {
+            background-color: #4CAF50;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>火山引擎API测试工具</h1>
+        
+        <div class="test-section">
+            <h2>API配置</h2>
+            <div class="form-group">
+                <label for="apiUrl">API URL</label>
+                <select id="apiUrl">
+                    <option value="https://ark.cn-beijing.volces.com/api/coding/v3/chat/completions">完整路径: /api/coding/v3/chat/completions</option>
+                    <option value="https://ark.cn-beijing.volces.com/api/coding/v3">基础路径: /api/coding/v3</option>
+                    <option value="https://ark.cn-beijing.volces.com/api/v3/chat/completions">OpenAI协议: /api/v3/chat/completions</option>
+                    <option value="https://ark.cn-beijing.volces.com/api/coding/v1/messages">Anthropic协议: /api/coding/v1/messages</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="apiKey">API Key</label>
+                <input type="text" id="apiKey" value="025b1c73-ec00-4f98-889f-bb66647fd3e0" placeholder="API Key">
+            </div>
+            <div class="form-group">
+                <label for="modelName">模型名称/端点ID</label>
+                <select id="modelName">
+                    <option value="MiniMax-M2.5">MiniMax-M2.5</option>
+                    <option value="ark-code-latest">ark-code-latest</option>
+                    <option value="minimax-m2.5">minimax-m2.5</option>
+                    <option value="ep-20260418162048-84567">ep-20260418162048-84567</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="testMessage">测试消息</label>
+                <textarea id="testMessage" placeholder="输入测试消息...">你好，请简单介绍一下自己</textarea>
+            </div>
+            <button id="testButton" onclick="testAPI()">测试API连接</button>
+        </div>
+
+        <div class="result-section" id="resultSection" style="display: none;">
+            <h3>API响应结果</h3>
+            <div id="responseContent"></div>
+        </div>
+
+        <div class="log-section">
+            <h3>操作日志</h3>
+            <div id="logContent"></div>
+        </div>
+    </div>
+
+    <script>
+        function addLog(message, type = 'info') {
+            const logContent = document.getElementById('logContent');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            logContent.appendChild(logEntry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        async function testAPI() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const apiKey = document.getElementById('apiKey').value;
+            const modelName = document.getElementById('modelName').value;
+            const testMessage = document.getElementById('testMessage').value;
+            const testButton = document.getElementById('testButton');
+            const resultSection = document.getElementById('resultSection');
+            const responseContent = document.getElementById('responseContent');
+
+            testButton.disabled = true;
+            addLog('开始测试API连接...', 'info');
+            addLog(`API URL: ${apiUrl}`, 'info');
+            addLog(`模型: ${modelName}`, 'info');
+
+            try {
+                // 根据API URL判断使用哪种协议格式
+                const isAnthropicProtocol = apiUrl.includes('coding') && !apiUrl.includes('v3/chat/completions');
+                let requestData, headers;
+
+                if (isAnthropicProtocol) {
+                    // Anthropic协议格式
+                    addLog('使用Anthropic协议格式', 'info');
+                    requestData = {
+                        model: modelName,
+                        messages: [
+                            { role: "user", content: testMessage }
+                        ],
+                        max_tokens: 500,
+                        temperature: 0.7
+                    };
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,  // Anthropic通常用x-api-key
+                        'anthropic-version': '2023-06-01'
+                    };
+                } else {
+                    // OpenAI协议格式
+                    addLog('使用OpenAI协议格式', 'info');
+                    requestData = {
+                        model: modelName,
+                        messages: [
+                            { role: "system", content: "你是一个专业的AI助手" },
+                            { role: "user", content: testMessage }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 500
+                    };
+                    headers = {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`
+                    };
+                }
+
+                addLog('发送请求...', 'info');
+                addLog(`请求数据: ${JSON.stringify(requestData, null, 2)}`, 'info');
+                addLog(`请求头: ${JSON.stringify(Object.keys(headers), null, 2)}`, 'info');
+
+                const startTime = Date.now();
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: headers,
+                    body: JSON.stringify(requestData)
+                });
+                const endTime = Date.now();
+
+                addLog(`响应状态: ${response.status} ${response.statusText}`, 'info');
+                addLog(`响应时间: ${endTime - startTime}ms`, 'info');
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: '无法解析错误响应' }));
+                    addLog(`API调用失败: ${JSON.stringify(errorData, null, 2)}`, 'error');
+                    
+                    resultSection.style.display = 'block';
+                    resultSection.style.backgroundColor = '#ffebee';
+                    resultSection.style.borderLeftColor = '#f44336';
+                    responseContent.innerHTML = `
+                        <p><strong>状态码:</strong> ${response.status}</p>
+                        <p><strong>协议类型:</strong> ${isAnthropicProtocol ? 'Anthropic' : 'OpenAI'}</p>
+                        <p><strong>错误信息:</strong></p>
+                        <pre style="background: #333; padding: 10px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(errorData, null, 2)}</pre>
+                    `;
+                    throw new Error(`API调用失败: ${response.status}`);
+                }
+
+                const data = await response.json();
+                addLog('响应数据:', 'info');
+                addLog(JSON.stringify(data, null, 2), 'info');
+
+                // 根据协议类型解析AI回复
+                let aiResponse;
+                if (isAnthropicProtocol && data.content) {
+                    // Anthropic格式
+                    aiResponse = data.content[0].text;
+                } else if (data.choices && data.choices[0].message) {
+                    // OpenAI格式
+                    aiResponse = data.choices[0].message.content;
+                } else {
+                    aiResponse = JSON.stringify(data, null, 2);
+                }
+
+                addLog('API调用成功!', 'success');
+
+                resultSection.style.display = 'block';
+                resultSection.style.backgroundColor = '#e8f5e9';
+                resultSection.style.borderLeftColor = '#4CAF50';
+                responseContent.innerHTML = `
+                    <p><strong>状态码:</strong> ${response.status}</p>
+                    <p><strong>响应时间:</strong> ${endTime - startTime}ms</p>
+                    <p><strong>协议类型:</strong> ${isAnthropicProtocol ? 'Anthropic' : 'OpenAI'}</p>
+                    <p><strong>AI回复:</strong></p>
+                    <pre style="background: #333; padding: 10px; border-radius: 5px; overflow-x: auto;">${aiResponse}</pre>
+                    <p><strong>完整响应:</strong></p>
+                    <pre style="background: #333; padding: 10px; border-radius: 5px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>
+                `;
+
+            } catch (error) {
+                console.error('API测试错误:', error);
+                addLog(`测试失败: ${error.message}`, 'error');
+                
+                if (!resultSection.style.display || resultSection.style.display === 'none') {
+                    resultSection.style.display = 'block';
+                    resultSection.style.backgroundColor = '#ffebee';
+                    resultSection.style.borderLeftColor = '#f44336';
+                    responseContent.innerHTML = `
+                        <p><strong>错误类型:</strong> ${error.name}</p>
+                        <p><strong>错误信息:</strong> ${error.message}</p>
+                        <p><strong>可能原因:</strong></p>
+                        <ul style="margin-left: 20px; margin-top: 10px;">
+                            <li>API URL或模型名称不正确</li>
+                            <li>API Key无效或已过期</li>
+                            <li>请求头格式不正确</li>
+                            <li>存在CORS跨域限制</li>
+                            <li>网络连接问题</li>
+                        </ul>
+                    `;
+                }
+            } finally {
+                testButton.disabled = false;
+            }
+        }
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('API测试工具已加载', 'info');
+            addLog('请配置API参数后点击测试按钮', 'info');
+        });
+    </script>
+</body>
+</html>
